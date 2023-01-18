@@ -3,10 +3,13 @@ const app = express();
 const PORT = process.env.PORT || 5500;
 const path = require('path');
 const cookieParser = require('cookie-parser');
+const cors = require('cors');
+const corsOptions = require('./config/corsOptions');
 const { logger, logEvents } = require('./middleware/logger');
 const errorHandler = require('./middleware/errorHandler');
 
 app.use(logger);
+app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json()); // handle json
 app.use('/', express.static(path.join(__dirname, 'public')));
