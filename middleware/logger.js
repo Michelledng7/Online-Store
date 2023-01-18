@@ -6,7 +6,7 @@ const path = require('path');
 
 const logEvents = async (message, logFileName) => {
 	const dateTime = `${format(new Date(), 'yyyyMMdd\tHH:mm:ss')}`;
-	const logItme = `${dateTime}\t${uuid()}\t${message}\n`;
+	const logItem = `${dateTime}\t${uuid()}\t${message}\n`;
 
 	try {
 		if (!fs.existsSync(path.join(__dirname, '..', 'logs'))) {
@@ -14,7 +14,7 @@ const logEvents = async (message, logFileName) => {
 		}
 		await fsPromises.appendFile(
 			path.join(__dirname, '..', 'logs', logFileName),
-			logItme
+			logItem
 		);
 	} catch (error) {
 		console.log(error);
