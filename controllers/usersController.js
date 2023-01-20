@@ -7,17 +7,82 @@ const bcrypt = require('bcrypt');
 //@desc Get all users
 //@route GET /users
 //@access Private
-const getAllUsers = asyncHandler(async (req, res) => {});
+const getAllUsers = asyncHandler(async (req, res) => {
+	const users = await User.find().select('-password').lean(); //only get json data, not the password
+	if (!users) {
+		return res.status(404).json({ message: 'no users found' });
+	}
+	res.json(users);
+});
 
 //@desc Create a new user
 //@route POST /users
 //@access Private
-const createNewUser = asyncHandler(async (req, res) => {});
+const createNewUser = asyncHandler(async (req, res) => {
+	const { username, password, roles } = req.body;
+	// confirm data is valid
+	if (!username || !password || !Array.isArrary(roles) || !roles.length) {
+		return res.status(400).json({ message: 'All fields are required' });
+	}
+	// check for duplicate, don't want users with same name
+	const duplicate = await User.findOne({ username }).lean().exec();
+	if (duplicate) {
+		return res.status(409).json({ message: 'Duplicate username' });
+	}
+	// hash password
+	const hashedPassword = await bcrypt.hash(password, 10); //salt rounds hashed pwd in db
+	const userObject = { username, password: hashedPassword, roles };
+
+	// create and store new user
+	const user = await User.create(userObject);
+	if (user) {
+		//created
+		res.status(201).json({ message: `New user ${username} created` });
+	} else {
+		res.status(400).json({ message: 'Invalid user data received' });
+	}
+});
 
 //@desc Update a user
 //@route PATCH /users
 //@access Private
-const updateUser = asyncHandler(async (req, res) => {});
+const updateUser = asyncHandler(async (req, res) => {
+	const { username, password, roles, id, active } = req.body;
+	//confirm data
+	if (
+		!username ||
+		!password ||
+		!Array.isArray(roles) ||
+		!roles.length ||
+		!id ||
+		typeof active != 'boolean'
+	) {
+		return res.status(400).json({ message: 'All fields are required' });
+	}
+	const user = await User.findById(id).exec(); //no need lean(), save method attached to it
+	if (!user) {
+		return res.status(400).json({ message: 'User not found' });
+	}
+
+	//check for duplicate
+	const duplicate = await User.findOne({ username }).lean().exec(); //don't need method return with this
+	//Allow updates to the original user
+	if (duplicate && duplicate?._id.toString() !== id) {
+		return res.status(409).json({message: 'Duplicate username'})
+	}
+
+	user.username = username //latter is updated
+	user.roles = roles
+	user.active = active
+
+	if (password) {
+		user.password = await bcrypt.hash(password, 10)
+	}
+
+	const updatedUser = await user.save()
+	res.json({message: `${updatedUser.username} updated`})
+
+
 
 //@desc delete a user
 //@route DELETE /users
