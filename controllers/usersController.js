@@ -21,7 +21,7 @@ const getAllUsers = asyncHandler(async (req, res) => {
 const createNewUser = asyncHandler(async (req, res) => {
 	const { username, password, roles } = req.body;
 	// confirm data is valid
-	if (!username || !password || !Array.isArrary(roles) || !roles.length) {
+	if (!username || !password) {
 		return res.status(400).json({ message: 'All fields are required' });
 	}
 	// check for duplicate, don't want users with same name
@@ -31,7 +31,7 @@ const createNewUser = asyncHandler(async (req, res) => {
 	}
 	// hash password
 	const hashedPassword = await bcrypt.hash(password, 10); //salt rounds hashed pwd in db
-	const userObject = { username, password: hashedPassword, roles };
+	const userObject = { username, password: hashedPassword, roles }; //received username from req
 
 	// create and store new user
 	const user = await User.create(userObject);
@@ -63,31 +63,49 @@ const updateUser = asyncHandler(async (req, res) => {
 	if (!user) {
 		return res.status(400).json({ message: 'User not found' });
 	}
-
 	//check for duplicate
 	const duplicate = await User.findOne({ username }).lean().exec(); //don't need method return with this
 	//Allow updates to the original user
 	if (duplicate && duplicate?._id.toString() !== id) {
-		return res.status(409).json({message: 'Duplicate username'})
+		return res.status(409).json({ message: 'Duplicate username' });
 	}
 
-	user.username = username //latter is updated
-	user.roles = roles
-	user.active = active
+	user.username = username; //latter is updated
+	user.roles = roles;
+	user.active = active;
 
 	if (password) {
-		user.password = await bcrypt.hash(password, 10)
+		user.password = await bcrypt.hash(password, 10);
 	}
 
-	const updatedUser = await user.save()
-	res.json({message: `${updatedUser.username} updated`})
-
-
+	const updatedUser = await user.save();
+	res.json({ message: `${updatedUser.username} updated` });
+});
 
 //@desc delete a user
 //@route DELETE /users
 //@access Private
-const deleteUser = asyncHandler(async (req, res) => {});
+const deleteUser = asyncHandler(async (req, res) => {
+	const { id } = req.body;
+	if (!id) {
+		return res.status(400).json({ message: 'No user id provided' });
+	}
+
+	const tickets = await Ticket.findOne({ user: id }).lean().exec();
+	if (tickets?.length) {
+		return res.status(400).json({ message: 'User has tickets assigned' });
+	}
+
+	const deleteUser = await User.findById(id).exec();
+	if (!deleteUser) {
+		return res.status(400).json({ message: 'User not Found' });
+	}
+	const result = await deleteUser.deleteOne();
+
+	res.status(200).json({
+		message: `User ${result.username} with id ${result._id} deleted`,
+	});
+});
 
 module.exports = {
 	getAllUsers,

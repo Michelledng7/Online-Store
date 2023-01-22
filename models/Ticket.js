@@ -25,7 +25,7 @@ const ticketSchema = new mongoose.Schema(
 	{ timestamps: true }
 ); // it's option and adds createdAt and updatedAt);
 
-noteSchema.plugin(AutoIncrement, {
+ticketSchema.plugin(AutoIncrement, {
 	inc_field: 'ticket',
 	id: 'ticketNums',
 	start_seq: 600,
