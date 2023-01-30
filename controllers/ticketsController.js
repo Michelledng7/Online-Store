@@ -35,4 +35,28 @@ const createNewTicket = asyncHandler(async (req, res) => {
 	}
 });
 
-module.exports = { getAllTickets, createNewTicket };
+const updateTicket = asyncHandler(async (req, res) => {
+	const { id, title, text, user, complete } = req.body;
+	//confirm notes exist to update
+	const ticket = await Ticket.findById(id).exec();
+	if (!ticket) {
+		return res.status(400).json({ message: 'No ticket to update' });
+	}
+
+	//check for duplicate title
+	const duplicate = Ticket.findOne({ title }).lean().exec();
+
+	//
+	// if (duplicate || duplicate?._id.toString() !== id) {
+	// 	return res.status(400).json({ message: 'Ticket title already exists' });
+	// }
+	ticket.user = user;
+	ticket.title = title;
+	ticket.text = text;
+	ticket.complete = complete;
+
+	const updatedTicket = await ticket.save();
+	res.status(200).json({ message: `Ticket ${updatedTicket._id} updated` });
+});
+
+module.exports = { getAllTickets, createNewTicket, updateTicket };
