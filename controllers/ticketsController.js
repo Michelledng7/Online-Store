@@ -59,4 +59,14 @@ const updateTicket = asyncHandler(async (req, res) => {
 	res.status(200).json({ message: `Ticket ${updatedTicket._id} updated` });
 });
 
-module.exports = { getAllTickets, createNewTicket, updateTicket };
+const deleteTicket = asyncHandler(async (req, res) => {
+	const { id } = req.body;
+	const ticket = await Ticket.findById(id).exec();
+	if (!ticket) {
+		return res.status(400).json({ message: 'No ticket to delete' });
+	}
+	const deletedTicket = await ticket.deleteOne();
+	res.status(200).json({ message: `Ticket ${deletedTicket._id} deleted` });
+});
+
+module.exports = { getAllTickets, createNewTicket, updateTicket, deleteTicket };

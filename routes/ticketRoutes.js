@@ -6,6 +6,7 @@ router
 	.route('/')
 	.get(ticketsController.getAllTickets)
 	.post(ticketsController.createNewTicket)
-	.patch(ticketsController.updateTicket);
+	.patch(ticketsController.updateTicket)
+	.delete(ticketsController.deleteTicket);
 
 module.exports = router;
