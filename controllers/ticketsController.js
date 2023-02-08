@@ -18,7 +18,6 @@ const getAllTickets = asyncHandler(async (req, res) => {
 //@desc Create a new ticket
 //@route POST /tickets
 //@access Private
-
 const createNewTicket = asyncHandler(async (req, res) => {
 	const { title, text, user } = req.body;
 	//confirm validate data
@@ -35,8 +34,15 @@ const createNewTicket = asyncHandler(async (req, res) => {
 	}
 });
 
+//@desc Update a ticket
+//@route PATCH /tickets
+//@access Private
 const updateTicket = asyncHandler(async (req, res) => {
 	const { id, title, text, user, complete } = req.body;
+	if (!id || !title || !text || !user || typeof complete !== 'boolean') {
+		return res.status(400).json({ message: 'All fields required' });
+	}
+
 	//confirm notes exist to update
 	const ticket = await Ticket.findById(id).exec();
 	if (!ticket) {
@@ -45,11 +51,9 @@ const updateTicket = asyncHandler(async (req, res) => {
 
 	//check for duplicate title
 	const duplicate = Ticket.findOne({ title }).lean().exec();
-
-	//
-	// if (duplicate || duplicate?._id.toString() !== id) {
-	// 	return res.status(400).json({ message: 'Ticket title already exists' });
-	// }
+	if (duplicate || duplicate?._id.toString() !== id) {
+		return res.status(400).json({ message: 'Ticket title already exists' });
+	}
 	ticket.user = user;
 	ticket.title = title;
 	ticket.text = text;
@@ -59,14 +63,22 @@ const updateTicket = asyncHandler(async (req, res) => {
 	res.status(200).json({ message: `Ticket ${updatedTicket._id} updated` });
 });
 
+//@desc Delete a ticket
+//@route DELETE /tickets
+//@access Private
 const deleteTicket = asyncHandler(async (req, res) => {
 	const { id } = req.body;
+	if (!id) {
+		return res.status(400).json({ message: 'Ticket id required' });
+	}
 	const ticket = await Ticket.findById(id).exec();
 	if (!ticket) {
 		return res.status(400).json({ message: 'No ticket to delete' });
 	}
 	const deletedTicket = await ticket.deleteOne();
-	res.status(200).json({ message: `Ticket ${deletedTicket._id} deleted` });
+	res.status(200).json({
+		message: `Ticket ${deletedTicket.title} with ID ${deletedTicket._id} deleted`,
+	});
 });
 
 module.exports = { getAllTickets, createNewTicket, updateTicket, deleteTicket };
