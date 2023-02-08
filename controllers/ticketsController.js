@@ -50,9 +50,11 @@ const updateTicket = asyncHandler(async (req, res) => {
 	}
 
 	//check for duplicate title
-	const duplicate = Ticket.findOne({ title }).lean().exec();
-	if (duplicate || duplicate?._id.toString() !== id) {
-		return res.status(400).json({ message: 'Ticket title already exists' });
+	const duplicate = await Ticket.findOne({ title }).lean().exec();
+	if (duplicate && duplicate?._id.toString() !== id) {
+		return res
+			.status(400)
+			.json({ message: `Ticket title already exists ${duplicate}` });
 	}
 	ticket.user = user;
 	ticket.title = title;
