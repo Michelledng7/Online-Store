@@ -39,6 +39,14 @@ const login = asyncHandler(async (req, res) => {
 		process.env.REFRESH_TOKEN_SECRET,
 		{ expiresIn: '1d' }
 	);
+	//create secure cookie with refresh token
+	res.cookie('jwt', refreshToken, {
+		httpOnly: true, //only web server can access
+		secure: true, //https only
+		sameSite: 'none', //cross-site cookies
+		maxAge: 7 * 24 * 60 * 60 * 1000, // cookie expiry 7 days
+	});
+	res.json({ accessToken });
 });
 
 // @desc Logout
