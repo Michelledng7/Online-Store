@@ -39,9 +39,9 @@ const createNewTicket = asyncHandler(async (req, res) => {
 //@access Private
 const updateTicket = asyncHandler(async (req, res) => {
 	const { id, title, text, user, complete } = req.body;
-	if (!id || !title || !text || !user || typeof complete !== 'boolean') {
-		return res.status(400).json({ message: 'All fields required' });
-	}
+	// if (!id || !title || !text || !user || typeof complete !== 'boolean') {
+	// 	return res.status(400).json({ message: 'All fields required' });
+	// }
 
 	//confirm notes exist to update
 	const ticket = await Ticket.findById(id).exec();
