@@ -9,4 +9,4 @@ router.route('/logout').post(authController.logout);
 
 router.route('/refresh').get(authController.refresh);
 
-module.export = router;
+module.exports = router;
