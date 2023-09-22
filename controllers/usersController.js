@@ -1,6 +1,5 @@
 const User = require('../models/User');
 const Ticket = require('../models/Ticket');
-
 const asyncHandler = require('express-async-handler'); //keep us from using too many try/catch blocks
 const bcrypt = require('bcrypt');
 

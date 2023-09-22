@@ -14,7 +14,7 @@ const login = asyncHandler(async (req, res) => {
 	}
 	const foundUser = await User.findOne({ username }).exec();
 	if (!foundUser || !foundUser.active) {
-		return res.status(401).json({ message: 'Unauthorized' });
+		return res.status(401).json({ message: 'UnauthorizedU' });
 	}
 	const match = await bcrypt.compare(password, foundUser.password);
 	if (!match) {
@@ -28,8 +28,9 @@ const login = asyncHandler(async (req, res) => {
 				roles: foundUser.roles,
 			},
 		},
-		process.env.ACCESS_TOKES_SECRET,
-		{ expiresIn: '10s' }
+
+		process.env.ACCESS_TOKEN_SECRET,
+		{ expiresIn: '7d' }
 	);
 
 	const refreshToken = jwt.sign(
@@ -37,7 +38,7 @@ const login = asyncHandler(async (req, res) => {
 			username: foundUser.username,
 		},
 		process.env.REFRESH_TOKEN_SECRET,
-		{ expiresIn: '1d' }
+		{ expiresIn: '7d' }
 	);
 	//create secure cookie with refresh token
 	res.cookie('jwt', refreshToken, {
@@ -46,6 +47,7 @@ const login = asyncHandler(async (req, res) => {
 		sameSite: 'none', //cross-site cookies
 		maxAge: 7 * 24 * 60 * 60 * 1000, // cookie expiry 7 days
 	});
+	// Send accessToken containing username and roles
 	res.json({ accessToken });
 });
 
@@ -55,7 +57,7 @@ const login = asyncHandler(async (req, res) => {
 const refresh = asyncHandler(async (req, res) => {
 	const cookies = req.cookies;
 	if (!cookies.jwt) {
-		return res.status(401).json({ message: 'Unauthorized' });
+		return res.status(401).json({ message: 'UnauthorizedCookies' });
 	}
 	const refreshToken = cookies.jwt;
 	jwt.verify(
@@ -63,11 +65,11 @@ const refresh = asyncHandler(async (req, res) => {
 		process.env.REFRESH_TOKEN_SECRET,
 		asyncHandler(async (err, decoded) => {
 			if (err) {
-				return res.status(403).json({ message: 'Not authorized' });
+				return res.status(403).json({ message: 'Forbidden' });
 			}
-			const foundUser = User.findOne({ username: decoded.username });
+			const foundUser = User.findOne({ username: decoded.username }).exec();
 			if (!foundUser) {
-				return res.status(401).json({ message: 'Unauthorized' });
+				return res.status(401).json({ message: 'Unauthorized-no user' });
 			}
 			const accessToken = jwt.sign(
 				{
@@ -77,7 +79,7 @@ const refresh = asyncHandler(async (req, res) => {
 					},
 				},
 				process.env.ACCESS_TOKEN_SECRET,
-				{ expiresIn: '10s' }
+				{ expiresIn: '7d' }
 			);
 			res.json({ accessToken });
 		})
@@ -89,8 +91,8 @@ const refresh = asyncHandler(async (req, res) => {
 // @access Private
 const logout = async (req, res) => {
 	const cookies = req.cookies;
-	if (!cookies.jwt) return res.sendStatus(204);
-	res.clearCookie('jwt', { httpOnly: true, sameSite: None, secure: true });
+	if (!cookies.jwt) return res.sendStatus(204); //no content in cookies
+	res.clearCookie('jwt', { httpOnly: true, sameSite: 'None', secure: true });
 	res.json({ message: 'Cookie cleared' });
 };
 
